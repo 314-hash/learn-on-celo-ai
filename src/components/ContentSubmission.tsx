@@ -5,7 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Upload, Link, FileText, Mic } from 'lucide-react';
 import HolographicCard from './HolographicCard';
 
-const ContentSubmission = () => {
+interface ContentSubmissionProps {
+  onContentProcessed?: () => void;
+}
+
+const ContentSubmission = ({ onContentProcessed }: ContentSubmissionProps) => {
   const [contentUrl, setContentUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedType, setSelectedType] = useState<'youtube' | 'pdf' | 'blog' | 'podcast'>('youtube');

@@ -8,9 +8,10 @@ import FloatingParticles from '@/components/FloatingParticles';
 import HolographicCard from '@/components/HolographicCard';
 import ConnectWallet from '@/components/ConnectWallet';
 import ContentSubmission from '@/components/ContentSubmission';
+import LearningInterface from '@/components/LearningInterface';
 
 const Index = () => {
-  const [currentView, setCurrentView] = useState<'landing' | 'connect' | 'dashboard'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'connect' | 'dashboard' | 'learning'>('landing');
 
   const features = [
     {
@@ -116,11 +117,15 @@ const Index = () => {
               <h1 className="text-5xl font-bold hologram-text mb-4">Learning Dashboard</h1>
               <p className="text-xl text-cyan-300">Submit content and let AI create your personalized learning materials</p>
             </div>
-            <ContentSubmission />
+            <ContentSubmission onContentProcessed={() => setCurrentView('learning')} />
           </div>
         </div>
       </div>
     );
+  }
+
+  if (currentView === 'learning') {
+    return <LearningInterface onBack={() => setCurrentView('dashboard')} />;
   }
 
   return (
