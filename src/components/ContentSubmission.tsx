@@ -1,15 +1,20 @@
-
 import { useState } from 'react';
+import { useCelo } from '@celo/react-celo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload, Link, FileText, Mic } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import HolographicCard from './HolographicCard';
+import { useLearningData } from '@/hooks/useLearningData';
 
 interface ContentSubmissionProps {
   onContentProcessed?: () => void;
 }
 
 const ContentSubmission = ({ onContentProcessed }: ContentSubmissionProps) => {
+  const { address } = useCelo();
+  const { submitContent } = useLearningData();
+  const { toast } = useToast();
   const [contentUrl, setContentUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedType, setSelectedType] = useState<'youtube' | 'pdf' | 'blog' | 'podcast'>('youtube');
@@ -22,14 +27,39 @@ const ContentSubmission = ({ onContentProcessed }: ContentSubmissionProps) => {
   ];
 
   const handleSubmit = async () => {
+    if (!address) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (!contentUrl.trim()) return;
     
     setIsProcessing(true);
-    // Simulate AI processing
-    setTimeout(() => {
+    
+    try {
+      await submitContent(contentUrl.trim());
+      toast({
+        title: "Content submitted!",
+        description: "Your content is being processed by AI. This may take a few minutes.",
+      });
+      
+      // Clear form
+      setContentUrl('');
+      onContentProcessed?.();
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast({
+        title: "Submission failed",
+        description: "Please try again. Make sure you have enough CELO for gas fees.",
+        variant: "destructive"
+      });
+    } finally {
       setIsProcessing(false);
-      // Here would trigger the results view
-    }, 5000);
+    }
   };
 
   return (
@@ -73,13 +103,13 @@ const ContentSubmission = ({ onContentProcessed }: ContentSubmissionProps) => {
 
           <Button
             onClick={handleSubmit}
-            disabled={!contentUrl.trim() || isProcessing}
+            disabled={!contentUrl.trim() || isProcessing || !address}
             className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-4 px-6 rounded-xl border-2 border-cyan-400 hover:border-purple-400 transition-all duration-300 text-lg"
           >
             {isProcessing ? (
               <div className="flex items-center gap-3">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                AI Processing... Please wait
+                Submitting to Blockchain...
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -94,29 +124,20 @@ const ContentSubmission = ({ onContentProcessed }: ContentSubmissionProps) => {
         {isProcessing && (
           <div className="space-y-4 p-4 bg-cyan-400/10 border border-cyan-400/30 rounded-xl">
             <div className="text-center">
-              <div className="text-cyan-300 font-medium mb-2">AI Learning Assistant is working...</div>
+              <div className="text-cyan-300 font-medium mb-2">Submitting to Celo blockchain...</div>
               <div className="w-full bg-gray-700 rounded-full h-2">
-                <div className="bg-gradient-to-r from-cyan-500 to-purple-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }} />
+                <div className="bg-gradient-to-r from-cyan-500 to-purple-500 h-2 rounded-full animate-pulse" style={{ width: '100%' }} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex items-center gap-2 text-gray-300">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                Extracting content
-              </div>
-              <div className="flex items-center gap-2 text-gray-300">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                Generating summary
-              </div>
-              <div className="flex items-center gap-2 text-gray-300">
-                <div className="w-2 h-2 bg-blue-400 rounded-full" />
-                Creating flashcards
-              </div>
-              <div className="flex items-center gap-2 text-gray-300">
-                <div className="w-2 h-2 bg-purple-400 rounded-full" />
-                Building quiz
-              </div>
+            <div className="text-sm text-center text-gray-300">
+              After blockchain confirmation, AI processing will begin automatically
             </div>
+          </div>
+        )}
+
+        {!address && (
+          <div className="p-4 bg-yellow-400/10 border border-yellow-400/30 rounded-xl text-center">
+            <p className="text-yellow-300">Please connect your wallet to submit content</p>
           </div>
         )}
       </div>

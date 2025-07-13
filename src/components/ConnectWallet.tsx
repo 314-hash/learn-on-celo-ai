@@ -1,23 +1,26 @@
 
 import { useState } from 'react';
+import { useCelo } from '@celo/react-celo';
 import { Button } from '@/components/ui/button';
-import { Wallet, Zap, Shield } from 'lucide-react';
+import { Wallet, Zap, Shield, ExternalLink } from 'lucide-react';
 import HolographicCard from './HolographicCard';
 
 const ConnectWallet = () => {
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [walletConnected, setWalletConnected] = useState(false);
+  const { address, connect, disconnect, network } = useCelo();
+  const [connecting, setConnecting] = useState(false);
 
   const handleConnect = async () => {
-    setIsConnecting(true);
-    // Simulate wallet connection
-    setTimeout(() => {
-      setWalletConnected(true);
-      setIsConnecting(false);
-    }, 2000);
+    setConnecting(true);
+    try {
+      await connect();
+    } catch (error) {
+      console.error('Connection failed:', error);
+    } finally {
+      setConnecting(false);
+    }
   };
 
-  if (walletConnected) {
+  if (address) {
     return (
       <HolographicCard className="max-w-md mx-auto">
         <div className="text-center space-y-4">
@@ -25,8 +28,29 @@ const ConnectWallet = () => {
             <Shield className="w-8 h-8 text-white" />
           </div>
           <h3 className="text-xl font-bold hologram-text">Wallet Connected</h3>
-          <p className="text-cyan-300">Celo Alfajores Network</p>
-          <p className="text-sm text-gray-400 font-mono">0x1234...5678</p>
+          <p className="text-cyan-300">{network?.name || 'Celo Alfajores'}</p>
+          <p className="text-sm text-gray-400 font-mono">
+            {address.slice(0, 6)}...{address.slice(-4)}
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(`https://alfajores.celoscan.io/address/${address}`, '_blank')}
+              className="border-cyan-400 text-cyan-400 hover:bg-cyan-400/10"
+            >
+              <ExternalLink className="w-3 h-3 mr-1" />
+              View on Explorer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={disconnect}
+              className="border-red-400 text-red-400 hover:bg-red-400/10"
+            >
+              Disconnect
+            </Button>
+          </div>
         </div>
       </HolographicCard>
     );
@@ -57,10 +81,10 @@ const ConnectWallet = () => {
 
         <Button
           onClick={handleConnect}
-          disabled={isConnecting}
+          disabled={connecting}
           className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl border-2 border-cyan-400 hover:border-purple-400 transition-all duration-300"
         >
-          {isConnecting ? (
+          {connecting ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               Connecting...
